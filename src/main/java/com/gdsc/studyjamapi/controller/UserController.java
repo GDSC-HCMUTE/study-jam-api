@@ -2,6 +2,7 @@ package com.gdsc.studyjamapi.controller;
 
 import com.gdsc.studyjamapi.api.UserApi;
 import com.gdsc.studyjamapi.dto.request.CreateUserRequest;
+import com.gdsc.studyjamapi.dto.request.EditUserRequest;
 import com.gdsc.studyjamapi.dto.response.UserResponse;
 import com.gdsc.studyjamapi.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,13 @@ public class UserController implements UserApi {
       CreateUserRequest request, UriComponentsBuilder ucb) {
     UserResponse newUser = userService.createUser(request);
     URI locationOfNewUser = ucb.path("/users/{id}").buildAndExpand(newUser.getId()).toUri();
+    return ResponseEntity.created(locationOfNewUser).build();
+  }
+
+  public ResponseEntity<UserResponse> editUser(
+          EditUserRequest request, UriComponentsBuilder ucb) {
+    UserResponse editUser = userService.editUser(request);
+    URI locationOfNewUser = ucb.path("/users/{id}").buildAndExpand(editUser.getId()).toUri();
     return ResponseEntity.created(locationOfNewUser).build();
   }
 

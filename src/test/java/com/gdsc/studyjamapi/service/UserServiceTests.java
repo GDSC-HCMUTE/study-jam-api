@@ -2,10 +2,12 @@ package com.gdsc.studyjamapi.service;
 
 import com.gdsc.studyjamapi.common.Role;
 import com.gdsc.studyjamapi.dto.request.CreateUserRequest;
+import com.gdsc.studyjamapi.dto.request.EditUserRequest;
 import com.gdsc.studyjamapi.dto.response.UserResponse;
 import com.gdsc.studyjamapi.entity.User;
 import com.gdsc.studyjamapi.exception.EmailAlreadyExistsException;
 import com.gdsc.studyjamapi.exception.NotFoundException;
+import com.gdsc.studyjamapi.mapper.UserMapper;
 import com.gdsc.studyjamapi.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,6 +23,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @SpringBootTest
@@ -159,5 +162,88 @@ public class UserServiceTests {
     assertNotNull(actualResponse);
     assertEquals(expecteUser.getId(), actualResponse.getId());
     assertEquals(expecteUser.getEmail(), actualResponse.getEmail());
+  }
+
+  @Test
+  void CanCreateAndEditAccount() {
+    CreateUserRequest request = CreateUserRequest.builder()
+            .fullName("Full Name")
+            .email("test@gmail.com")
+            .password("password")
+            .role("SUPER_ADMIN")
+            .build();
+
+    when(userRepository.findUserByEmail("test@gmail.com")).thenReturn(Optional.empty());
+
+    String encodedPassword = "encodedPassword";
+    when(passwordEncoder.encode(request.getPassword())).thenReturn(encodedPassword);
+
+    User newUserRequest =
+            User.builder()
+                    .fullName(request.getFullName())
+                    .email(request.getEmail())
+                    .password(encodedPassword)
+                    .role(Role.valueOf(request.getRole()))
+                    .isEnabled(true)
+                    .build();
+    User expectedNewUser =
+            User.builder()
+                    .id(UUID.fromString("7ce10103-45af-4569-90ea-213306d05ec1"))
+                    .fullName(request.getFullName())
+                    .email(request.getEmail())
+                    .password(encodedPassword)
+                    .role(Role.valueOf(request.getRole()))
+                    .isEnabled(true)
+                    .build();
+
+    when(userRepository.save(any(User.class))).thenReturn(expectedNewUser); // Use any() here
+    UserResponse actualResponse = userService.createUser(request);
+
+    when(userRepository.findUserByEmail("test@gmail.com")).thenReturn(Optional.of(expectedNewUser));
+
+    EditUserRequest editRequest =
+            EditUserRequest.builder()
+                    .fullName("New full name")
+                    .email(request.getEmail())
+                    .password("newPassword")
+                    .role("SUPER_ADMIN")
+                    .build();
+
+    String newEncodedPassword = "newEncodedPassword"; // Ensure the encoded password is correct
+    when(passwordEncoder.encode(editRequest.getPassword())).thenReturn(newEncodedPassword);
+
+    User updatedUser = User.builder()
+            .id(expectedNewUser.getId())
+            .fullName(editRequest.getFullName())
+            .email(editRequest.getEmail())
+            .password(newEncodedPassword)
+            .role(Role.valueOf(editRequest.getRole()))
+            .isEnabled(true)
+            .build();
+
+    when(userRepository.save(any(User.class))).thenReturn(updatedUser); // Use any() here
+    UserResponse editedUserResponse = userService.editUser(editRequest);
+
+    assertNotNull(editedUserResponse);
+    assertEquals(editRequest.getFullName(), editedUserResponse.getFullName());
+    assertEquals(editRequest.getEmail(), editedUserResponse.getEmail());
+    assertTrue(actualResponse.getIsEnabled());
+  }
+
+
+  @Test
+  void testUserToUserResponseMapping() {
+    User user = User.builder()
+            .id(UUID.fromString("7ce10103-45af-4569-90ea-213306d05ec1"))
+            .fullName("New full name")
+            .email("test@gmail.com")
+            .password("encodedPassword")
+            .role(Role.SUPER_ADMIN)
+            .isEnabled(true)
+            .build();
+
+    UserResponse response = UserMapper.INSTANCE.userToUserResponse(user);
+    assertNotNull(response);
+    assertEquals(user.getFullName(), response.getFullName());
   }
 }

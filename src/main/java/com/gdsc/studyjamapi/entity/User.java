@@ -36,7 +36,7 @@ public class User extends BaseEntity implements UserDetails {
   @Column(nullable = false)
   @Enumerated(EnumType.STRING)
   private Role role;
-
+  @Builder.Default
   private Boolean isEnabled = true;
 
   @ManyToOne

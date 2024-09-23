@@ -2,6 +2,7 @@ package com.gdsc.studyjamapi.service;
 
 import com.gdsc.studyjamapi.common.Role;
 import com.gdsc.studyjamapi.dto.request.CreateUserRequest;
+import com.gdsc.studyjamapi.dto.request.EditUserRequest;
 import com.gdsc.studyjamapi.dto.response.UserResponse;
 import com.gdsc.studyjamapi.entity.User;
 import com.gdsc.studyjamapi.exception.NotFoundException;
@@ -67,4 +68,29 @@ public class UserService {
   public UserResponse getCurrentUserResponse() {
     return UserMapper.INSTANCE.userToUserResponse(getCurrentUser());
   }
+
+  public UserResponse editUser(EditUserRequest request) {
+    // Check if the user exists by email
+    Optional<User> optionalUser = userRepository.findUserByEmail(request.getEmail());
+    if (!optionalUser.isPresent()) {
+      System.err.println("User not found with email: " + request.getEmail());
+      throw new NotFoundException(EMAIL_NOT_FOUND);
+    }
+
+    User user = optionalUser.get();
+    System.out.println("Editing user with email: " + user.getEmail());
+
+    // Update user details
+    user.setFullName(request.getFullName());
+    user.setPassword(passwordEncoder.encode(request.getPassword()));
+    user.setRole(Role.valueOf(request.getRole()));
+
+    // Save updated user
+    User updatedUser = userRepository.save(user);
+    System.out.println("User updated successfully: " + updatedUser.getId());
+
+    // Map updated user to response
+    return UserMapper.INSTANCE.userToUserResponse(updatedUser);
+  }
+
 }

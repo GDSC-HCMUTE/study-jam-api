@@ -1,6 +1,7 @@
 package com.gdsc.studyjamapi.api;
 
 import com.gdsc.studyjamapi.dto.request.CreateUserRequest;
+import com.gdsc.studyjamapi.dto.request.EditUserRequest;
 import com.gdsc.studyjamapi.dto.response.ErrorResponse;
 import com.gdsc.studyjamapi.dto.response.UserResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -92,4 +93,9 @@ public interface UserApi {
       })
   @GetMapping("/current")
   ResponseEntity<UserResponse> getCurrentUser();
+  @PutMapping("/{id}")
+    ResponseEntity<UserResponse> editUser(
+            @RequestBody @Valid EditUserRequest request, UriComponentsBuilder ucb
+  );
+
 }
